@@ -124,7 +124,7 @@
   <!-- ───────── 裁判費 ───────── -->
   <section class="panel on" id="fee">
     <label>訴訟標的金額／價額(元)</label>
-    <input type="number" id="feeVal" inputmode="numeric" placeholder="例:3000000" value="3000000">
+    <input type="number" id="feeVal" inputmode="numeric" placeholder="例:3000000">
 
     <label>審級</label>
     <div class="seg" id="feeInst">
@@ -159,13 +159,13 @@
   <!-- ───────── 遲延利息 ───────── -->
   <section class="panel" id="intr">
     <label>本金(元)</label>
-    <input type="number" id="intP" inputmode="numeric" placeholder="例:500000" value="500000">
+    <input type="number" id="intP" inputmode="numeric" placeholder="例:500000">
 
     <label>利息起算日(常為起訴狀繕本送達翌日)</label>
-    <input type="date" id="intStart" value="2025-06-23">
+    <input type="date" id="intStart">
 
     <label>截止日(清償日／計算至)</label>
-    <input type="date" id="intEnd" value="2026-06-23">
+    <input type="date" id="intEnd">
 
     <label>年利率(%)</label>
     <input type="number" id="intRate" inputmode="decimal" step="0.01" value="5">
@@ -193,12 +193,12 @@
     <div class="note" style="margin:12px 2px 0;">繼承順位只由「最先存在」者繼承(§1138)。依下列順序,填最先有人的那一欄即可,其餘留 0。</div>
 
     <div class="row">
-      <div><label>① 直系血親卑親屬(子女等)</label><input type="number" id="inhDesc" inputmode="numeric" min="0" value="2"></div>
-      <div><label>② 父母</label><input type="number" id="inhPar" inputmode="numeric" min="0" value="0"></div>
+      <div><label>① 直系血親卑親屬(子女等)</label><input type="number" id="inhDesc" inputmode="numeric" min="0" placeholder="0"></div>
+      <div><label>② 父母</label><input type="number" id="inhPar" inputmode="numeric" min="0" placeholder="0"></div>
     </div>
     <div class="row">
-      <div><label>③ 兄弟姊妹</label><input type="number" id="inhSib" inputmode="numeric" min="0" value="0"></div>
-      <div><label>④ 祖父母</label><input type="number" id="inhGp" inputmode="numeric" min="0" value="0"></div>
+      <div><label>③ 兄弟姊妹</label><input type="number" id="inhSib" inputmode="numeric" min="0" placeholder="0"></div>
+      <div><label>④ 祖父母</label><input type="number" id="inhGp" inputmode="numeric" min="0" placeholder="0"></div>
     </div>
 
     <div class="chk"><input type="checkbox" id="inhRep"><label for="inhRep" style="margin:0;">① 子女有代位繼承(§1140):某子女於繼承開始前死亡,由其直系血親卑親屬代位</label></div>
@@ -219,17 +219,17 @@
   <!-- ───────── 土地持分 ───────── -->
   <section class="panel" id="land">
     <label>地號面積(平方公尺)</label>
-    <input type="number" id="lndArea" inputmode="decimal" placeholder="例:2601.28" value="2601.28">
+    <input type="number" id="lndArea" inputmode="decimal" placeholder="例:2601.28">
 
     <label>權利範圍</label>
     <div class="frac">
-      <input type="number" id="lndDen" inputmode="numeric" placeholder="分母" value="14" style="text-align:center;">
+      <input type="number" id="lndDen" inputmode="numeric" placeholder="分母" style="text-align:center;">
       <span>分之</span>
-      <input type="number" id="lndNum" inputmode="numeric" placeholder="分子" value="1" style="text-align:center;">
+      <input type="number" id="lndNum" inputmode="numeric" placeholder="分子" style="text-align:center;">
     </div>
 
     <label>公告土地現值(元/㎡,可留空)</label>
-    <input type="number" id="lndValue" inputmode="numeric" placeholder="例:9500" value="9500">
+    <input type="number" id="lndValue" inputmode="numeric" placeholder="例:9500">
 
     <div class="result" id="lndResult"></div>
 
@@ -293,6 +293,7 @@ const feeProp=segGroup('feeProp',renderFee);
 const feeTph =segGroup('feeTph',renderFee);
 function renderFee(){
   const v=intv(feeVal.value),inst=feeInst(),prop=feeProp()===1,tph=feeTph()===1,labor=feeLabor.checked;
+  if(prop&&v<=0){feeResult.innerHTML='<div class="eyebrow">主 文</div><div class="main">請輸入訴訟標的金額／價額。</div>';return;}
   const fee=courtFee(v,inst,prop,tph,labor);
   const instName={1:'第一審',2:'第二審',3:'第三審'}[inst];
   let detail='';
@@ -362,7 +363,10 @@ function renderBranches(){
 }
 function renderInh(){
   const sp=inhSpouse()===1;
-  const {res}=shares(sp,intv(inhDesc.value),intv(inhPar.value),intv(inhSib.value),intv(inhGp.value),inhRep.checked?getBranches():null);
+  const desc=intv(inhDesc.value),par=intv(inhPar.value),sib=intv(inhSib.value),gp=intv(inhGp.value);
+  const br=inhRep.checked?getBranches():null;const useBr=(br&&br.length>0)?br:null;
+  if(!useBr&&desc<=0&&par<=0&&sib<=0&&gp<=0){inhResult.innerHTML='<div class="eyebrow">結 果</div><div class="main">請輸入繼承人資料(各順位人數)。</div>';return;}
+  const {res}=shares(sp,desc,par,sib,gp,useBr);
   const total=intv(inhTotal.value);
   if(res.length===0){inhResult.innerHTML='<div class="eyebrow">結 果</div><div class="main">無法定繼承人,遺產歸國庫(§1185)。</div>';return;}
   let rows='',hasSibGp=false,hasRep=false;
